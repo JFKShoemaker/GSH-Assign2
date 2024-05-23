@@ -14,7 +14,8 @@ addpath([HOME '/Tools']);
 %load(model_name);
 
 % Construct new model
-inputModel    
+inputModel 
+
 
 %%%%%%%%%%%%%%%%%%% Computation area %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%% Part that can be modified %%%%%%%%%%%%%%%%%%%%%%%

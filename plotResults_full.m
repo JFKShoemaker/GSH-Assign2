@@ -11,11 +11,11 @@ load('Results/data_Crust10_crust_3_179_26-Mar-2019 13:14:45.mat')
 lon = data.grd.lon(1,:);
 lats = data.grd.lat(:,1);
 
-load coast;
+%load coast;
 
 figure;
 subplot(2,2,1)
-imagesc(lon,lats,((data.pot)));c=colorbar; 
+%imagesc(lon,lats,((data.pot)));c=colorbar; 
 hold on
 plot(long,lat,'k','LineWidth',1.5);
 xlim([min(lon) max(lon)])
