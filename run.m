@@ -15,6 +15,25 @@ addpath([HOME '/Tools']);
 
 % Construct new model
 inputModel 
+make_topo
+
+plot(Topo)
+figure; % Create a new figure
+imagesc(Topo); % Display the data as a heatmap
+
+% Customize the colormap
+colormap('hot'); % Choose a colormap (e.g., 'hot', 'jet', 'parula', etc.)
+
+% Add a colorbar
+colorbar;
+
+% Add labels
+xlabel('X-axis Label'); % Replace with appropriate label
+ylabel('Y-axis Label'); % Replace with appropriate label
+title('Heatmap of Topo Array'); % Replace with appropriate title
+
+% Adjust axis properties if needed
+axis equal; % Ensures the aspect ratio is equal
 
 
 %%%%%%%%%%%%%%%%%%% Computation area %%%%%%%%%%%%%%%%%%%%%%%%%%%
