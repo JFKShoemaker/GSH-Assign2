@@ -14,10 +14,10 @@ addpath([HOME '/Tools']);
 %load(model_name);
 
 % Construct new model
-inputModel 
+%inputModel 
 make_topo
 
-plot(Topo)
+%plot(Topo)
 figure; % Create a new figure
 imagesc(Topo); % Display the data as a heatmap
 
@@ -28,13 +28,20 @@ colormap('hot'); % Choose a colormap (e.g., 'hot', 'jet', 'parula', etc.)
 colorbar;
 
 % Add labels
-xlabel('X-axis Label'); % Replace with appropriate label
-ylabel('Y-axis Label'); % Replace with appropriate label
-title('Heatmap of Topo Array'); % Replace with appropriate title
+xlabel('Longitude'); % Replace with appropriate label
+ylabel('Latitude'); % Replace with appropriate label
+title('Topography'); % Replace with appropriate title
 
 % Adjust axis properties if needed
 axis equal; % Ensures the aspect ratio is equal
 
+factor = 4;
+xticks = get(gca, 'XTick'); % Get current x-axis tick values
+xticklabels = xticks / factor; % Compute new tick labels
+set(gca, 'XTickLabel', xticklabels); % Set new tick labels
+yticks = get(gca, 'YTick'); % Get current y-axis tick values
+yticklabels = yticks / factor; % Compute new tick labels
+set(gca, 'YTickLabel', yticklabels); % Set new tick labels
 
 %%%%%%%%%%%%%%%%%%% Computation area %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%% Part that can be modified %%%%%%%%%%%%%%%%%%%%%%%
