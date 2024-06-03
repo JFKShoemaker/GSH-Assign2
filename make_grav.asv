@@ -8,5 +8,6 @@ V = V([2:end],[1:4]);
 
 V = [0 0 1 0; V];
 V = sortrows(V,1);
+V()
 
-gr
+grav_data = V
