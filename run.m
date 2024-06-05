@@ -135,7 +135,7 @@ colorbar;
 % Add labels
 xlabel('Longitude'); % Replace with appropriate label
 ylabel('Latitude'); % Replace with appropriate label
-title('Bouguer_resized'); % Replace with appropriate title
+title('Bouguer resized'); % Replace with appropriate title
 
 % Adjust axis properties if needed
 axis equal; % Ensures the aspect ratio is equal
@@ -173,9 +173,42 @@ yticklabels = yticks / factor; % Compute new tick labels
 set(gca, 'YTickLabel', yticklabels); % Set new tick labels
 
 
+%%%%%%%%%%%%%%%%%%%%%%% MODEL 1 %%%%%%%%%%%%%%%%%%%%%%%
 
 
+layer = segment_2layer_model(Topo, Topo-ones(720, 1440)*75000, -200000, 2900, 3750, 10000, Model );
+layer(1,3) = 0;
+layer(4,3) = 0;
 
+[GF_generated_M1] = model_SH_synthesis(lonLim,latLim,height,SHbounds,layer,Model);
+gdata_layer = flip(sqrt(GF_generated_M1.vec.R.^2 + GF_generated_M1.vec.T.^2 + GF_generated_M1.vec.L.^2));
+
+figure; % Create a new figure
+imagesc(gdata_layer-Bouguer_resized); % Display the data as a heatmap
+
+% Customize the colormap
+colormap(bwr_colormap);
+
+% Add a colorbar
+colorbar;
+
+% Add labels
+xlabel('Longitude'); % Replace with appropriate label
+ylabel('Latitude'); % Replace with appropriate label
+title('Gravity Field - M1'); % Replace with appropriate title
+
+% Adjust axis properties if needed
+axis equal; % Ensures the aspect ratio is equal
+
+
+% Adjust tick labels
+factor = 1;
+xticks = get(gca, 'XTick'); % Get current x-axis tick values
+xticklabels = xticks / factor; % Compute new tick labels
+set(gca, 'XTickLabel', xticklabels); % Set new tick labels
+yticks = get(gca, 'YTick'); % Get current y-axis tick values
+yticklabels = yticks / factor; % Compute new tick labels
+set(gca, 'YTickLabel', yticklabels); % Set new tick labels
 
 
 
