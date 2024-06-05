@@ -23,7 +23,18 @@ figure; % Create a new figure
 imagesc(Topo); % Display the data as a heatmap
 
 % Customize the colormap
-colormap('hot'); % Choose a colormap (e.g., 'hot', 'jet', 'parula', etc.)
+bwr_colormap = [
+    0.0, 0.0, 1.0;  % Blue
+    1.0, 1.0, 1.0;  % White
+    1.0, 0.0, 0.0   % Red
+];
+
+% Interpolate to get a smooth colormap with 256 colors
+n_colors = 256;
+bwr_colormap = interp1([1, round(n_colors / 2), n_colors], bwr_colormap, 1:n_colors);
+
+% Use the colormap in your figure
+colormap(bwr_colormap);
 
 % Add a colorbar
 colorbar;
@@ -79,12 +90,12 @@ toc
 
 
 
-gdata = sqrt(GF_generated.vec.R.^2 + GF_generated.vec.T.^2 + GF_generated.vec.L.^2);
+gdata = flip(sqrt(GF_generated.vec.R.^2 + GF_generated.vec.T.^2 + GF_generated.vec.L.^2));
 figure; % Create a new figure
-imagesc(gdata  ); % Display the data as a heatmap
+imagesc(gdata); % Display the data as a heatmap
 
 % Customize the colormap
-colormap('hot'); % Choose a colormap (e.g., 'hot', 'jet', 'parula', etc.)
+colormap(bwr_colormap);
 
 % Add a colorbar
 colorbar;
@@ -92,12 +103,14 @@ colorbar;
 % Add labels
 xlabel('Longitude'); % Replace with appropriate label
 ylabel('Latitude'); % Replace with appropriate label
-title('Gravity potential'); % Replace with appropriate title
+title('Gravity Field'); % Replace with appropriate title
 
 % Adjust axis properties if needed
 axis equal; % Ensures the aspect ratio is equal
 
-factor = 4;
+
+% Adjust tick labels
+factor = 1;
 xticks = get(gca, 'XTick'); % Get current x-axis tick values
 xticklabels = xticks / factor; % Compute new tick labels
 set(gca, 'XTickLabel', xticklabels); % Set new tick labels
@@ -107,20 +120,20 @@ set(gca, 'YTickLabel', yticklabels); % Set new tick labels
 
 
 
-Bouguer = 2*pi*6.67430*10^-11*2900*(Topo)
+
+Bouguer = 2*pi*6.67430*10^-11*2900*Topo;
 figure; % Create a new figure
 imagesc(Bouguer  ); % Display the data as a heatmap
 
 % Customize the colormap
-colormap('hot'); % Choose a colormap (e.g., 'hot', 'jet', 'parula', etc.)
-
+colormap(bwr_colormap);
 % Add a colorbar
 colorbar;
 
 % Add labels
 xlabel('Longitude'); % Replace with appropriate label
 ylabel('Latitude'); % Replace with appropriate label
-title('Bouguer correction'); % Replace with appropriate title
+title('Bouguer'); % Replace with appropriate title
 
 % Adjust axis properties if needed
 axis equal; % Ensures the aspect ratio is equal
