@@ -121,9 +121,11 @@ set(gca, 'YTickLabel', yticklabels); % Set new tick labels
 
 
 
-Bouguer = 2*pi*6.67430*10^-11*2900*Topo;
+Bouguer = 2*pi*6.67430E-11*2900*Topo;
+
+Bouguer_resized = imresize(Bouguer,[180, 361]);
 figure; % Create a new figure
-imagesc(Bouguer  ); % Display the data as a heatmap
+imagesc(Bouguer_resized  ); % Display the data as a heatmap
 
 % Customize the colormap
 colormap(bwr_colormap);
@@ -133,12 +135,36 @@ colorbar;
 % Add labels
 xlabel('Longitude'); % Replace with appropriate label
 ylabel('Latitude'); % Replace with appropriate label
-title('Bouguer'); % Replace with appropriate title
+title('Bouguer_resized'); % Replace with appropriate title
 
 % Adjust axis properties if needed
 axis equal; % Ensures the aspect ratio is equal
 
-factor = 4;
+factor = 1;
+xticks = get(gca, 'XTick'); % Get current x-axis tick values
+xticklabels = xticks / factor; % Compute new tick labels
+set(gca, 'XTickLabel', xticklabels); % Set new tick labels
+yticks = get(gca, 'YTick'); % Get current y-axis tick values
+yticklabels = yticks / factor; % Compute new tick labels
+set(gca, 'YTickLabel', yticklabels); % Set new tick labels
+
+figure; % Create a new figure
+imagesc(gdata-Bouguer_resized  ); % Display the data as a heatmap
+
+% Customize the colormap
+colormap(bwr_colormap);
+% Add a colorbar
+colorbar;
+
+% Add labels
+xlabel('Longitude'); % Replace with appropriate label
+ylabel('Latitude'); % Replace with appropriate label
+title('gravity-Bouguer'); % Replace with appropriate title
+
+% Adjust axis properties if needed
+axis equal; % Ensures the aspect ratio is equal
+
+factor = 1;
 xticks = get(gca, 'XTick'); % Get current x-axis tick values
 xticklabels = xticks / factor; % Compute new tick labels
 set(gca, 'XTickLabel', xticklabels); % Set new tick labels
