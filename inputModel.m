@@ -11,11 +11,11 @@ Model.number_of_layers = 9;
 Model.name = 'Crust10_crust';
 
 % Additional variables
-Model.GM = 3.9860004415E14;
-Model.Re_analyse = 6378136.30;
-Model.Re = 6378136.30;
+Model.GM =  42828.3748574E9;
+Model.Re_analyse = 3396000;
+Model.Re = 3396000;
 Model.geoid = 'none';
-Model.nmax = 179;     
+Model.nmax = 120;     
 Model.correct_depth = 0;
 
 % % Topo layer
