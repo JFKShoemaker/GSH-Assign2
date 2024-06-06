@@ -64,24 +64,24 @@ set(gca, 'YTickLabel', yticklabels); % Set new tick labels
 %%%%%%%%%%%%%%%%%%% Computation area %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%% Part that can be modified %%%%%%%%%%%%%%%%%%%%%%%
 
-latLim =    [-89.5 89.5 1];  % [deg] min latitude, max latitude, resolution latitude (preferable similar to latitude)
-lonLim =    [-180 180 1];% [deg] min longitude, max longitude, resolution longitude (preferable similar to latitude)
-height =    225000.0; % height of computation above spheroid
-SHbounds =  [0 179]; % Truncation settings: lower limit, upper limit SH-coefficients used
+% latLim =    [-89.5 89.5 1];  % [deg] min latitude, max latitude, resolution latitude (preferable similar to latitude)
+% lonLim =    [-180 180 1];% [deg] min longitude, max longitude, resolution longitude (preferable similar to latitude)
+% height =    225000.0; % height of computation above spheroid
+% SHbounds =  [0 179]; % Truncation settings: lower limit, upper limit SH-coefficients used
 
 %%%%%%%%%%%%%% Part that can be modified %%%%%%%%%%%%%%%%%%%%%%%
 %gravfield = GSHS(grav_data,latLim,lonLim,SHbounds)
 
 
 latLim =    [-89.5 89.5 1];  % [deg] min latitude, max latitude, resolution latitude (preferable similar to latitude)
-lonLim =    [0 360 1];% [deg] min longitude, max longitude, resolution longitude (preferable similar to latitude)
+lonLim =    [0.5 359.5 1];% [deg] min longitude, max longitude, resolution longitude (preferable similar to latitude)
 height =    0; % height of computation above spheroid
 SHbounds =  [0 90;];
 
 tic
 %[V] = model_SH_analysis(Model);
-%V(1,3) = 0;
-%V(3,3) = 0;
+V(1,3) = 0;
+V(3,3) = 0;
 [GF_generated] = model_SH_synthesis(lonLim,latLim,height,SHbounds,V,Model);
 toc
 
@@ -123,7 +123,7 @@ set(gca, 'YTickLabel', yticklabels); % Set new tick labels
 
 Bouguer = 2*pi*6.67430E-11*2900*Topo;
 
-Bouguer_resized = imresize(Bouguer,[180, 361]);
+Bouguer_resized = imresize(Bouguer,[180, 360]);
 figure; % Create a new figure
 imagesc(Bouguer_resized  ); % Display the data as a heatmap
 
@@ -174,14 +174,37 @@ set(gca, 'YTickLabel', yticklabels); % Set new tick labels
 
 
 %%%%%%%%%%%%%%%%%%%%%%% MODEL 1 %%%%%%%%%%%%%%%%%%%%%%%
-
-
-layer = segment_2layer_model(Topo, Topo-ones(720, 1440)*75000, -200000, 2900, 3750, 10000, Model );
+FC = 0.25;
+D = 75000;
+layer = segment_2layer_model(imresize(Topo,[180, 360]), -ones(180, 360)*D, -200000, 2900, 3750, 25000, Model );
 layer(1,3) = 0;
 layer(4,3) = 0;
 
 [GF_generated_M1] = model_SH_synthesis(lonLim,latLim,height,SHbounds,layer,Model);
 gdata_layer = flip(sqrt(GF_generated_M1.vec.R.^2 + GF_generated_M1.vec.T.^2 + GF_generated_M1.vec.L.^2));
+
+dg = gdata - gdata_layer;
+dr2 = dg*FC;
+dr1 = dr2;
+diff = dr2;
+iter = 0;
+
+while mean(diff(:))/mean(dr2(:)) > eps & iter < 100
+    dr2 = dr1;
+    layer = segment_2layer_model(imresize(Topo,[180, 360]), -ones(180, 360)*D-dr1, -200000, 2900, 3750, 25000, Model );
+    layer(1,3) = 0;
+    layer(4,3) = 0;
+    
+    [GF_generated_M1] = model_SH_synthesis(lonLim,latLim,height,SHbounds,layer,Model);
+    gdata_layer = flip(sqrt(GF_generated_M1.vec.R.^2 + GF_generated_M1.vec.T.^2 + GF_generated_M1.vec.L.^2));
+    
+    dg = gdata - gdata_layer;
+    dr1 = dg*FC;
+
+    iter = iter+1;
+    diff = dr2-dr1;
+
+end
 
 figure; % Create a new figure
 imagesc(gdata_layer-Bouguer_resized); % Display the data as a heatmap
@@ -231,5 +254,4 @@ toc
 
 %% Save data
 
-DATE = datestr(now);
-save(['Results/data_' Model.name '_' num2str(SHbounds(1)) '_' num2str(SHbounds(2)) '_' DATE '.mat'],'GF_generated')
+save(['Results/data_' Model.name '_' num2str(SHbounds(1)) '_' num2str(SHbounds(2)).mat'],'GF_generated')
