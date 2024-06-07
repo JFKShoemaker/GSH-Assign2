@@ -204,7 +204,7 @@ eps = 1e3;
 diff = dr1;
 tab1 = g_obs - gdata_layer;
 
-while abs(mean(diff(:))) > 1 & iter < 10
+while abs(max(diff(:))/mean(dr2(:))) > 0.03 & iter < 50
     dr2 = dr1;
     V = segment_2layer_model(imresize(Topo,[180, 360]), -ones(180, 360)*D-dr1, -200000, 2900, 3750, 25000, Model );
     V(1,3) = 0;
@@ -219,10 +219,10 @@ while abs(mean(diff(:))) > 1 & iter < 10
     iter = iter+1;
 
     disp(iter);
-    disp(abs(mean(diff(:))))
+    disp(abs(max(diff(:))/mean(dr2(:))))
 end
 
-tab2 = g_obs-gdata_layer
+tab2 = g_obs-gdata_layer;
 figure; % Create a new figure
 imagesc(g_obs-gdata_layer); % Display the data as a heatmap
 
@@ -262,7 +262,7 @@ delta_rm2 = Topo*rho_c/(rho_m-rho_c);
 Tc = Topo + D + delta_rm2;
 
 figure; % Create a new figure
-imagesc(Tc/1e3); % Display the data as a heatmap
+imagesc(Tc); % Display the data as a heatmap
 
 % Customize the colormap
 colormap(bwr_colormap);
@@ -293,10 +293,57 @@ set(gca, 'YTickLabel', yticklabels); % Set new tick labels
 
 %%%%%%%%%%%%%%%%%%%%%%% M3 flexural %%%%%%%%%%%%%%%%%%%%%%%
 
+D = 75000;
+rho_c = 2900;
+rho_m = 3750;
+g = 3.72;
+R = 3396000;
 
-phi = flexural_inf(90);
+function [phi] = flexural_inf (n, D, rho_c, rho_m, g, R)
+    phi = ( 1+ (D/((rho_m-rho_c)*g))*((2*n+1)/(2*R))^4) ^ -1;
+end
 
-V = segment_2layer_model(imresize(Topo,[180, 360]), -ones(180, 360)*D, -200000, 2900, 3750, 25000, Model );
+V = segment_2layer_model(Topo, -Tc, -200000, 2900, 3750, 25000, Model );
+
+for i = 1:7381
+    V(i,3)=V(i,3)*flexural_inf(V(i,1), D, rho_c, rho_m, g, R);
+    V(i,4)=V(i,4)*flexural_inf(V(i,1), D, rho_c, rho_m, g, R);
+end
+
+V(1,3) = 0;
+V(3,3) = 0;
+
+[GF_generated_M3] = model_SH_synthesis(lonLim,latLim,height,SHbounds,V,Model);
+g_M3 = 1e5* flip(sqrt(GF_generated_M3.vec.R.^2 + GF_generated_M3.vec.T.^2 + GF_generated_M3.vec.L.^2)); %1e5 for converting into mGal
+figure; % Create a new figure
+imagesc(g_obs-g_M3); % Display the data as a heatmap
+
+% Customize the colormap
+colormap(bwr_colormap);
+
+% Add a colorbar
+hColorbar = colorbar;
+
+% Add a title to the colorbar and set its color
+hColorbar.Label.String = 'mGal';
+
+% Add labels
+xlabel('Longitude'); % Replace with appropriate label
+ylabel('Latitude'); % Replace with appropriate label
+title('Flexural'); % Replace with appropriate title
+
+% Adjust axis properties if needed
+axis equal; % Ensures the aspect ratio is equal
+
+
+% Adjust tick labels
+factor = 1;
+xticks = get(gca, 'XTick'); % Get current x-axis tick values
+xticklabels = xticks / factor; % Compute new tick labels
+set(gca, 'XTickLabel', xticklabels); % Set new tick labels
+yticks = get(gca, 'YTick'); % Get current y-axis tick values
+yticklabels = yticks / factor; % Compute new tick labels
+set(gca, 'YTickLabel', yticklabels); % Set new tick labels
 
 
 
