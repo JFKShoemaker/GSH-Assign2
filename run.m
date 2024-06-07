@@ -17,6 +17,7 @@ addpath([HOME '/Tools']);
 inputModel 
 make_topo
 make_grav
+flexural
 
 %plot(Topo)
 figure; % Create a new figure
@@ -196,29 +197,32 @@ V(4,3) = 0;
 gdata_layer = 1e5 * flip(sqrt(GF_generated_M1.vec.R.^2 + GF_generated_M1.vec.T.^2 + GF_generated_M1.vec.L.^2));
 
 dg = g_obs - gdata_layer;
-dr1 = 0;
-dr2 = 0;
+dr1 = dg*FC;
+dr2 = 2*dr1;
 iter = 0;
-eps = 1e-3;
+eps = 1e3;
+diff = dr1;
+tab1 = g_obs - gdata_layer;
 
-while abs(mean(dg(:))) > eps & iter < 1
+while abs(mean(diff(:))) > 1 & iter < 10
     dr2 = dr1;
     V = segment_2layer_model(imresize(Topo,[180, 360]), -ones(180, 360)*D-dr1, -200000, 2900, 3750, 25000, Model );
     V(1,3) = 0;
     V(4,3) = 0;
     
     [GF_generated_M1] = model_SH_synthesis(lonLim,latLim,height,SHbounds,V,Model);
-    gdata_layer = flip(sqrt(GF_generated_M1.vec.X.^2 + GF_generated_M1.vec.Y.^2 + GF_generated_M1.vec.Z.^2));
+    gdata_layer = 1e5*flip(sqrt(GF_generated_M1.vec.X.^2 + GF_generated_M1.vec.Y.^2 + GF_generated_M1.vec.Z.^2));
     
     dg = g_obs - gdata_layer;
     dr1 = dr1+dg*FC;
-
+    diff = dr2-dr1;
     iter = iter+1;
 
     disp(iter);
-    disp(mean(dg(:)))
+    disp(abs(mean(diff(:))))
 end
 
+tab2 = g_obs-gdata_layer
 figure; % Create a new figure
 imagesc(g_obs-gdata_layer); % Display the data as a heatmap
 
@@ -254,9 +258,8 @@ set(gca, 'YTickLabel', yticklabels); % Set new tick labels
 rho_c = 2900;
 rho_m = 3750;
 
-rc = Topo*rho_c/(rho_m-rho_c);
-Tc = Topo + D + rc;
-
+delta_rm2 = Topo*rho_c/(rho_m-rho_c);
+Tc = Topo + D + delta_rm2;
 
 figure; % Create a new figure
 imagesc(Tc/1e3); % Display the data as a heatmap
@@ -287,6 +290,16 @@ set(gca, 'XTickLabel', xticklabels); % Set new tick labels
 yticks = get(gca, 'YTick'); % Get current y-axis tick values
 yticklabels = yticks / factor; % Compute new tick labels
 set(gca, 'YTickLabel', yticklabels); % Set new tick labels
+
+%%%%%%%%%%%%%%%%%%%%%%% M3 flexural %%%%%%%%%%%%%%%%%%%%%%%
+
+
+phi = flexural_inf(90);
+
+V = segment_2layer_model(imresize(Topo,[180, 360]), -ones(180, 360)*D, -200000, 2900, 3750, 25000, Model );
+
+
+
 
 %%%%%%%%%%%%%%%%%%%%%%% aglagj %%%%%%%%%%%%%%%%%%%%%%%
 
