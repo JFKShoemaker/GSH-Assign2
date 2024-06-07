@@ -21,7 +21,7 @@ Model.correct_depth = 0;
 
 % First layer
 Model.l1.bound = [HOME '/Data/crust1.bd1.gmt'];
-Model.l1.dens = 2650;%[HOME '/Data/crust1.rho1.gmt'];
+Model.l1.dens = 2900;%[HOME '/Data/crust1.rho1.gmt'];
 % Second layer
 Model.l2.bound = -75000.*ones(size(gmt2matrix(importdata(Model.l1.bound))));
 Model.l2.dens = 3750;

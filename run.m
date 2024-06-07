@@ -204,7 +204,7 @@ eps = 1e3;
 diff = dr1;
 tab1 = g_obs - gdata_layer;
 
-while abs(max(diff(:))/mean(dr2(:))) > 0.03 & iter < 50
+while abs(max(diff(:))/mean(dr2(:))) > 0.03 & iter < 0
     dr2 = dr1;
     V = segment_2layer_model(imresize(Topo,[180, 360]), -ones(180, 360)*D-dr1, -200000, 2900, 3750, 25000, Model );
     V(1,3) = 0;
@@ -293,11 +293,13 @@ set(gca, 'YTickLabel', yticklabels); % Set new tick labels
 
 %%%%%%%%%%%%%%%%%%%%%%% M3 flexural %%%%%%%%%%%%%%%%%%%%%%%
 
-D = 75000;
+Te = 400000;
 rho_c = 2900;
 rho_m = 3750;
 g = 3.72;
 R = 3396000;
+
+D = (65e9*Te^3)/(12*(1-0.25*0.25));
 
 function [phi] = flexural_inf (n, D, rho_c, rho_m, g, R)
     phi = ( 1+ (D/((rho_m-rho_c)*g))*((2*n+1)/(2*R))^4) ^ -1;
@@ -310,13 +312,13 @@ for i = 1:7381
     V(i,4)=V(i,4)*flexural_inf(V(i,1), D, rho_c, rho_m, g, R);
 end
 
-V(1,3) = 0;
-V(3,3) = 0;
+% V(1,3) = 0;
+% V(3,3) = 0;
 
 [GF_generated_M3] = model_SH_synthesis(lonLim,latLim,height,SHbounds,V,Model);
 g_M3 = 1e5* flip(sqrt(GF_generated_M3.vec.R.^2 + GF_generated_M3.vec.T.^2 + GF_generated_M3.vec.L.^2)); %1e5 for converting into mGal
 figure; % Create a new figure
-imagesc(g_obs-g_M3); % Display the data as a heatmap
+imagesc(g_M3); % Display the data as a heatmap
 
 % Customize the colormap
 colormap(bwr_colormap);
@@ -325,7 +327,7 @@ colormap(bwr_colormap);
 hColorbar = colorbar;
 
 % Add a title to the colorbar and set its color
-hColorbar.Label.String = 'mGal';
+hColorbar.Label.String = 'km';
 
 % Add labels
 xlabel('Longitude'); % Replace with appropriate label
