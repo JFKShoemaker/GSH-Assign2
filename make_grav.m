@@ -8,7 +8,7 @@ V = V([2:end],[1:4]);
 
 V = [0 0 1 0; V];
 V = sortrows(V,2);
-V(1,3) = 0
-V(4,3) = 0
+V(1,3) = 0;
+V(4,3) = 0;
 
-grav_data = V
+grav_data = V;

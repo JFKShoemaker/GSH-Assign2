@@ -20,7 +20,7 @@ make_grav
 
 %plot(Topo)
 figure; % Create a new figure
-imagesc(Topo); % Display the data as a heatmap
+imagesc(Topo/1e3); % Display the data as a heatmap
 
 % Customize the colormap
 bwr_colormap = [
@@ -37,7 +37,10 @@ bwr_colormap = interp1([1, round(n_colors / 2), n_colors], bwr_colormap, 1:n_col
 colormap(bwr_colormap);
 
 % Add a colorbar
-colorbar;
+hColorbar = colorbar;
+
+% Add a title to the colorbar and set its color
+hColorbar.Label.String = 'Topography (km)';
 
 % Add labels
 xlabel('Longitude'); % Replace with appropriate label
@@ -90,15 +93,18 @@ toc
 
 
 
-gdata = flip(sqrt(GF_generated.vec.R.^2 + GF_generated.vec.T.^2 + GF_generated.vec.L.^2));
+g_obs = 1e5* flip(sqrt(GF_generated.vec.R.^2 + GF_generated.vec.T.^2 + GF_generated.vec.L.^2)); %1e5 for converting into mGal
 figure; % Create a new figure
-imagesc(gdata); % Display the data as a heatmap
+imagesc(g_obs); % Display the data as a heatmap
 
 % Customize the colormap
 colormap(bwr_colormap);
 
 % Add a colorbar
-colorbar;
+hColorbar = colorbar;
+
+% Add a title to the colorbar and set its color
+hColorbar.Label.String = 'mGal';
 
 % Add labels
 xlabel('Longitude'); % Replace with appropriate label
@@ -121,7 +127,7 @@ set(gca, 'YTickLabel', yticklabels); % Set new tick labels
 
 
 
-Bouguer = 2*pi*6.67430E-11*2900*Topo;
+Bouguer = 1e5*2*pi*6.67430E-11*2900*Topo;  % 1e5 for converting into mGal
 
 Bouguer_resized = imresize(Bouguer,[180, 360]);
 figure; % Create a new figure
@@ -130,7 +136,10 @@ imagesc(Bouguer_resized  ); % Display the data as a heatmap
 % Customize the colormap
 colormap(bwr_colormap);
 % Add a colorbar
-colorbar;
+hColorbar = colorbar;
+
+% Add a title to the colorbar and set its color
+hColorbar.Label.String = 'mGal';
 
 % Add labels
 xlabel('Longitude'); % Replace with appropriate label
@@ -149,12 +158,15 @@ yticklabels = yticks / factor; % Compute new tick labels
 set(gca, 'YTickLabel', yticklabels); % Set new tick labels
 
 figure; % Create a new figure
-imagesc(gdata-Bouguer_resized  ); % Display the data as a heatmap
+imagesc(g_obs-Bouguer_resized  ); % Display the data as a heatmap
 
 % Customize the colormap
 colormap(bwr_colormap);
 % Add a colorbar
-colorbar;
+hColorbar = colorbar;
+
+% Add a title to the colorbar and set its color
+hColorbar.Label.String = 'mGal';
 
 % Add labels
 xlabel('Longitude'); % Replace with appropriate label
@@ -176,44 +188,48 @@ set(gca, 'YTickLabel', yticklabels); % Set new tick labels
 %%%%%%%%%%%%%%%%%%%%%%% MODEL 1 %%%%%%%%%%%%%%%%%%%%%%%
 FC = 0.25;
 D = 75000;
-layer = segment_2layer_model(imresize(Topo,[180, 360]), -ones(180, 360)*D, -200000, 2900, 3750, 25000, Model );
-layer(1,3) = 0;
-layer(4,3) = 0;
+V = segment_2layer_model(imresize(Topo,[180, 360]), -ones(180, 360)*D, -200000, 2900, 3750, 25000, Model );
+V(1,3) = 0;
+V(4,3) = 0;
 
-[GF_generated_M1] = model_SH_synthesis(lonLim,latLim,height,SHbounds,layer,Model);
-gdata_layer = flip(sqrt(GF_generated_M1.vec.R.^2 + GF_generated_M1.vec.T.^2 + GF_generated_M1.vec.L.^2));
+[GF_generated_M1] = model_SH_synthesis(lonLim,latLim,height,SHbounds,V,Model);
+gdata_layer = 1e5 * flip(sqrt(GF_generated_M1.vec.R.^2 + GF_generated_M1.vec.T.^2 + GF_generated_M1.vec.L.^2));
 
-dg = gdata - gdata_layer;
-dr2 = dg*FC;
-dr1 = dr2;
-diff = dr2;
+dg = g_obs - gdata_layer;
+dr1 = 0;
+dr2 = 0;
 iter = 0;
+eps = 1e-3;
 
-while mean(diff(:))/mean(dr2(:)) > eps & iter < 100
+while abs(mean(dg(:))) > eps & iter < 1
     dr2 = dr1;
-    layer = segment_2layer_model(imresize(Topo,[180, 360]), -ones(180, 360)*D-dr1, -200000, 2900, 3750, 25000, Model );
-    layer(1,3) = 0;
-    layer(4,3) = 0;
+    V = segment_2layer_model(imresize(Topo,[180, 360]), -ones(180, 360)*D-dr1, -200000, 2900, 3750, 25000, Model );
+    V(1,3) = 0;
+    V(4,3) = 0;
     
-    [GF_generated_M1] = model_SH_synthesis(lonLim,latLim,height,SHbounds,layer,Model);
-    gdata_layer = flip(sqrt(GF_generated_M1.vec.R.^2 + GF_generated_M1.vec.T.^2 + GF_generated_M1.vec.L.^2));
+    [GF_generated_M1] = model_SH_synthesis(lonLim,latLim,height,SHbounds,V,Model);
+    gdata_layer = flip(sqrt(GF_generated_M1.vec.X.^2 + GF_generated_M1.vec.Y.^2 + GF_generated_M1.vec.Z.^2));
     
-    dg = gdata - gdata_layer;
-    dr1 = dg*FC;
+    dg = g_obs - gdata_layer;
+    dr1 = dr1+dg*FC;
 
     iter = iter+1;
-    diff = dr2-dr1;
 
+    disp(iter);
+    disp(mean(dg(:)))
 end
 
 figure; % Create a new figure
-imagesc(gdata_layer-Bouguer_resized); % Display the data as a heatmap
+imagesc(g_obs-gdata_layer); % Display the data as a heatmap
 
 % Customize the colormap
 colormap(bwr_colormap);
 
 % Add a colorbar
-colorbar;
+hColorbar = colorbar;
+
+% Add a title to the colorbar and set its color
+hColorbar.Label.String = 'mGal';
 
 % Add labels
 xlabel('Longitude'); % Replace with appropriate label
@@ -233,9 +249,47 @@ yticks = get(gca, 'YTick'); % Get current y-axis tick values
 yticklabels = yticks / factor; % Compute new tick labels
 set(gca, 'YTickLabel', yticklabels); % Set new tick labels
 
+%%%%%%%%%%%%%%%%%%%%%%% M2 isostasy %%%%%%%%%%%%%%%%%%%%%%%
 
+rho_c = 2900;
+rho_m = 3750;
+
+rc = Topo*rho_c/(rho_m-rho_c);
+Tc = Topo + D + rc;
+
+
+figure; % Create a new figure
+imagesc(Tc/1e3); % Display the data as a heatmap
+
+% Customize the colormap
+colormap(bwr_colormap);
+
+% Add a colorbar
+hColorbar = colorbar;
+
+% Add a title to the colorbar and set its color
+hColorbar.Label.String = 'Thickness (km)';
+
+% Add labels
+xlabel('Longitude'); % Replace with appropriate label
+ylabel('Latitude'); % Replace with appropriate label
+title('Tc'); % Replace with appropriate title
+
+% Adjust axis properties if needed
+axis equal; % Ensures the aspect ratio is equal
+
+
+% Adjust tick labels
+factor = 1;
+xticks = get(gca, 'XTick'); % Get current x-axis tick values
+xticklabels = xticks / factor; % Compute new tick labels
+set(gca, 'XTickLabel', xticklabels); % Set new tick labels
+yticks = get(gca, 'YTick'); % Get current y-axis tick values
+yticklabels = yticks / factor; % Compute new tick labels
+set(gca, 'YTickLabel', yticklabels); % Set new tick labels
 
 %%%%%%%%%%%%%%%%%%%%%%% aglagj %%%%%%%%%%%%%%%%%%%%%%%
+
 
 
 %% Global Spherical Harmonic Analysis 
