@@ -46,7 +46,7 @@ max_bin = 3;
 for nlayer = 1:Model.number_of_layers
     
     layer_name = ['l' num2str(nlayer)];
-    disp(['The layer number ' layer_name ' is starting'])
+    %disp(['The layer number ' layer_name ' is starting'])
     
     % Costruct the coefficients for that particular layer
     [U,L,R] = import_layer(Model,nlayer);
@@ -68,7 +68,7 @@ for nlayer = 1:Model.number_of_layers
     
     if isfield(Model.(layer_name), 'alpha')                
         [U,L,R,A] = import_layer(Model,nlayer);
-        disp('Linear density gradient layer')
+        %disp('Linear density gradient layer')
         
         [Vgradient] = gradient_SH_analysis(Model.nmax,Model.geoid,Model.Re,rhoE,max_bin,U,L,R,A);
         
