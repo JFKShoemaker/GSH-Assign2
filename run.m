@@ -133,7 +133,7 @@ V_m1 = segment_2layer_model(imresize(Topo,[180, 360]), -ones(180, 360)*D, -20000
 V_m1(1,3) = 0;
 V_m1(4,3) = 0;
 
-[GF_generated_M1] = model_SH_synthesis(lonLim,latLim,height,SHbounds,V,Model);
+[GF_generated_M1] = model_SH_synthesis(lonLim,latLim,height,SHbounds,V_m1,Model);
 gM1 = 1e5 * flip(sqrt(GF_generated_M1.vec.R.^2 + GF_generated_M1.vec.T.^2 + GF_generated_M1.vec.L.^2));
 
 dg = g_obs - gM1;
@@ -144,11 +144,11 @@ eps = 1e3;
 diff = dr1;
 tab1 = g_obs - gM1;
 
-while abs(1-max(dr1(:))/max(dr2(:))) > 0.01 & iter < 100
+while abs(1-max(dr1(:))/max(dr2(:))) > 0.01 & iter < 0
     dr2 = dr1;
     V_m1 = segment_2layer_model(imresize(Topo,[180, 360]), -ones(180, 360)*D-dr1, -200000, 2900, 3500, 25000, Model );
     V_m1(1,3) = 0;
-    V_m1(4,3) = 0;
+    V_m1(3,3) = 0;
     
     [GF_generated_M1] = model_SH_synthesis(lonLim,latLim,height,SHbounds,V_m1,Model);
     gM1 = 1e5*flip(sqrt(GF_generated_M1.vec.X.^2 + GF_generated_M1.vec.Y.^2 + GF_generated_M1.vec.Z.^2));
@@ -171,7 +171,24 @@ hColorbar = colorbar;
 hColorbar.Label.String = 'mGal';
 xlabel('Longitude'); % Replace with appropriate label
 ylabel('Latitude'); % Replace with appropriate label
-title('G_{obs} - g_{M1}'); % Replace with appropriate title
+title('g_{obs} - g_{M1}'); % Replace with appropriate title
+axis equal; % Ensures the aspect ratio is equal
+factor = 1;
+xticks = get(gca, 'XTick'); % Get current x-axis tick values
+xticklabels = xticks / factor; % Compute new tick labels
+set(gca, 'XTickLabel', xticklabels); % Set new tick labels
+yticks = get(gca, 'YTick'); % Get current y-axis tick values
+yticklabels = yticks / factor; % Compute new tick labels
+set(gca, 'YTickLabel', yticklabels); % Set new tick labels
+
+figure; % Create a new figure
+imagesc(gM1); % Display the data as a heatmap
+colormap(bwr_colormap);
+hColorbar = colorbar;
+hColorbar.Label.String = 'mGal';
+xlabel('Longitude'); % Replace with appropriate label
+ylabel('Latitude'); % Replace with appropriate label
+title('g_{M1}'); % Replace with appropriate title
 axis equal; % Ensures the aspect ratio is equal
 factor = 1;
 xticks = get(gca, 'XTick'); % Get current x-axis tick values
