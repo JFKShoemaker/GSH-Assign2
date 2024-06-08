@@ -64,9 +64,9 @@ lonLim =    [0.5 359.5 1];% [deg] min longitude, max longitude, resolution longi
 height =    0; % height of computation above spheroid
 SHbounds =  [0 90;];
 
-V_M3(1,3) = 0;
-V_M3(3,3) = 0;
-[GF_generated] = model_SH_synthesis(lonLim,latLim,height,SHbounds,V_M3,Model);
+V(1,3) = 0;
+V(3,3) = 0;
+[GF_generated] = model_SH_synthesis(lonLim,latLim,height,SHbounds,V,Model);
 
 g_obs = 1e5* flip(sqrt(GF_generated.vec.X.^2 + GF_generated.vec.Y.^2 + GF_generated.vec.Z.^2)); %1e5 for converting into mGal
 
@@ -154,7 +154,7 @@ eps = 1e3;
 diff = dr1;
 tab1 = g_obs - gM1;
 
-while abs(1-max(dr1(:))/max(dr2(:))) > 0.01 & iter < 20
+while abs(1-max(dr1(:))/max(dr2(:))) > 0.01 & iter < 0
     dr2 = dr1;
     V_m1 = segment_2layer_model(imresize(Topo,[180, 360]), -ones(180, 360)*D-dr1, -200000, rho_c, rho_m, 25000, Model );
     V_m1(1,3) = 0;
