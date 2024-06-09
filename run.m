@@ -36,6 +36,7 @@ bwr_colormap = [
 n_colors = 256;
 bwr_colormap = interp1([1, round(n_colors / 2), n_colors], bwr_colormap, 1:n_colors);
 
+%% 
 
 %%%%%%%%%%%%%% Topography from PDS %%%%%%%%%%%%%%%%%%%%%%%
 
@@ -184,15 +185,16 @@ delta_g = 1e-5*(g_obs-Bouguer_resized);
 delta_rho = rho_m-rho_c;
 Delta_h = delta_g / (2* pi *6.67430E-11* delta_rho);
 
+%% 
 
 
 %%%%%%%%%%%%%%%%%%%%%%% MODEL 1 %%%%%%%%%%%%%%%%%%%%%%%
 tic
 FC = 0.25;
-D = 75000; %max(Delta_h(:))-min(Delta_h(:));
+D = 100000; %max(Delta_h(:))-min(Delta_h(:));
 V_m1 = segment_2layer_model(imresize(Topo,[180, 360]), -ones(180, 360)*D, -200000, rho_c, rho_m, 25000, Model );
 V_m1(1,3) = 0;
-V_m1(4,3) = 0;
+V_m1(3,3) = 0;
 
 [GF_generated_M1] = model_SH_synthesis(lonLim,latLim,height,SHbounds,V_m1,Model);
 gM1 = 1e5 * flip(sqrt(GF_generated_M1.vec.R.^2 + GF_generated_M1.vec.T.^2 + GF_generated_M1.vec.L.^2));
@@ -205,7 +207,7 @@ eps = 1e3;
 diff = dr1;
 tab1 = g_obs - gM1;
 
-while abs(1-max(dr1(:))/max(dr2(:))) > 0.01 & iter < 0
+while abs(1-max(dr1(:))/max(dr2(:))) > 0.01 & iter < 100
     dr2 = dr1;
     V_m1 = segment_2layer_model(imresize(Topo,[180, 360]), -ones(180, 360)*D-dr1, -200000, rho_c, rho_m, 25000, Model );
     V_m1(1,3) = 0;
@@ -288,6 +290,9 @@ daspect([1, 1, 1]);
 
 yticklabels = round(-(yticks / factor)+90.4); % Compute new tick labels
 set(gca, 'YTickLabel', yticklabels); % Set new tick labels
+
+
+%% 
 
 %%%%%%%%%%%%%%%%%%%%%%% M2 isostasy %%%%%%%%%%%%%%%%%%%%%%%
 
@@ -384,9 +389,14 @@ daspect([1, 1, 1]);
 
 yticklabels = round(-(yticks / factor)+90.4); % Compute new tick labels
 set(gca, 'YTickLabel', yticklabels); % Set new tick labels
+
+
+%% 
+
 %%%%%%%%%%%%%%%%%%%%%%% M3 flexural %%%%%%%%%%%%%%%%%%%%%%%
 
-Te = 400000;
+
+Te = 150000;
 rho_c = 2900;
 rho_m = 3500;
 g = 3.72;
@@ -395,10 +405,10 @@ E = 100e9;
 D_M3 = (E*Te^3)/(12*(1-0.25*0.25));
 
 V_M3 = segment_2layer_model(Topo, -Tc, -200000, 2900, 3500, 25000, Model );
-
+flex = V_M3;
 for i = 1:7381
-    V_M3(i,3)=V_M3(i,3)*flexural_inf(V_M3(i,1), D_M3, rho_c, rho_m, g, R);
-    V_M3(i,4)=V_M3(i,4)*flexural_inf(V_M3(i,1), D_M3, rho_c, rho_m, g, R);
+    V_M3(i,3)=V_M3(i,3)*flexural(V_M3(i,1), D_M3, rho_c, rho_m, g, R);
+    V_M3(i,4)=V_M3(i,4)*flexural(V_M3(i,1), D_M3, rho_c, rho_m, g, R);
 end
 
 V_M3(1,3) = 0;
@@ -435,7 +445,7 @@ yticklabels = round(-(yticks / factor)+90.4); % Compute new tick labels
 set(gca, 'YTickLabel', yticklabels); % Set new tick labels
 
 figure; % Create a new figure
-imagesc(g_obs ); % Display the data as a heatmap
+imagesc(g_obs-g_M3 ); % Display the data as a heatmap
 colormap(bwr_colormap);
 hColorbar = colorbar;
 hColorbar.Label.String = 'mGal';
@@ -461,23 +471,72 @@ daspect([1, 1, 1]);
 
 yticklabels = round(-(yticks / factor)+90.4); % Compute new tick labels
 set(gca, 'YTickLabel', yticklabels); % Set new tick labels
+
+%% 
+
 %%%%%%%%%%%%%%%%%%%%%%% Degree Variance %%%%%%%%%%%%%%%%%%%%%%%
 
-mat_lat = GF_generated.grd.lat;
-mat_lon = GF_generated.grd.lon;
 
-gmt = matrix2gmt(g_obs, mat_lon, mat_lat);
+Te = 600000;
+rho_c = 2900;
+rho_m = 3500;
+g = 3.72;
+R = 3396000;
+E = 100e9;
 
 [n_obs,D_obs] = degreeVariance(V);
-[n_M1,D_M1] = degreeVariance(V_M1);
-[n_M2,D_M2] = degreeVariance(V_M2);
-[n_M3,D_M3] = degreeVariance(V_M3);
 
+n_M3 = zeros(121,27);
+DV_M3 = zeros(121,27);
 
+Te_list = 20000:20000:60000;
 
+for k=1:3
+    D_M3 = (E*Te_list(k)^3)/(12*(1-0.25*0.25));
 
+    V_M3 = segment_2layer_model(Topo, -Tc, -200000, 2900, 3500, 25000, Model );
 
+    for i = 1:7381
+        V_M3(i,3)=V_M3(i,3)*flexural(V_M3(i,1), D_M3, rho_c, rho_m, g, R);
+        V_M3(i,4)=V_M3(i,4)*flexural(V_M3(i,1), D_M3, rho_c, rho_m, g, R);
+    end
 
-function [phi] = flexural_inf (n, D, rho_c, rho_m, g, R)
-    phi = ( 1+ (D/((rho_m-rho_c)*g))*((2*n+1)/(2*R))^4) ^ -1;
+    V_M3(1,3) = 0;
+    V_M3(3,3) = 0;
+
+    [GF_generated_M3] = model_SH_synthesis(lonLim,latLim,height,SHbounds,V_M3,Model);
+    g_M3 = 1e5* flip(sqrt(GF_generated_M3.vec.R.^2 + GF_generated_M3.vec.T.^2 + GF_generated_M3.vec.L.^2)); %1e5 for converting into mGal
+
+    [n_M3_k,DV_M3_k] = degreeVariance(V_M3);
+    n_M3(:,k) = n_M3_k;
+    DV_M3(:,k) = DV_M3_k;
+
+    disp(num2str(k));
+
 end
+
+[n_M1,D_M1] = degreeVariance(V_m1);
+[n_M2,D_M2] = degreeVariance(V_M2);
+
+
+figure; % Create a new figure
+plot(n_obs, D_obs , 'DisplayName', 'Observed Data', 'LineWidth', 1.5);
+hold on;
+plot(n_M1, D_M1 , 'DisplayName', 'Model 1', 'LineWidth', 1.5);
+plot(n_M2, D_M2 , 'DisplayName', 'Model 2', 'LineWidth', 1.5);
+
+for k=1:3
+
+    plot(n_M3(:,k), DV_M3(:,k), 'DisplayName', num2str(Te_list(k)), 'LineWidth', 1);
+
+end
+xlabel('n');
+ylabel('D');
+set(gca, 'YScale', 'log');
+% set(gca, 'XScale', 'log');
+title('Degree Variance Plots');
+legend show;
+grid on;
+hold off;
+
+
