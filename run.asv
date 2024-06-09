@@ -449,7 +449,7 @@ desired_num_ticks = 7; % Change this number as needed
 x_limits = xlim; % Get the current x-axis limits
 new_xticks = linspace(x_limits(1), x_limits(2), desired_num_ticks); % Generate new tick positions
 xticks(new_xticks); % Set the new tick positions
-xticklabels = round( (xticks / factor)-0.4);
+xticklabels = round(xticks / factor)-0.4;
 
 set(gca, 'XTickLabel', xticklabels); % Set new tick labels
 
